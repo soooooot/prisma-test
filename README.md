@@ -5,14 +5,15 @@ Repo for ad-hoc testing prisma.io ORM
 Decimal type has rounding issue when persisting the object
 
 ```
-npm run db:up
-npm install
-npm run migrate:dev
-npm run start
+yarn db:up
+yarn
+yarn prisma:generate
+yarn migrate:deploy
+yarn start
 ```
 
 Clean up
 
 ```
-npm run db:down
+yarn db:down
 ```

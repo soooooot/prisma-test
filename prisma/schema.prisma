@@ -10,11 +10,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Product {
-  id        Int      @default(autoincrement()) @id
-  name      String
-  price1    Decimal
-  price2    Decimal
-  price3    Decimal
-  price4    Decimal
+model Price {
+  id        Int     @id
+  price     Decimal @db.Decimal(100, 0)
 }

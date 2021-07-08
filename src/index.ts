@@ -1,35 +1,47 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime';
+import { Prisma, PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient({ log: ['query', 'info', 'warn'] });
+const prisma = new PrismaClient({ log: ["query", "info", "warn"] });
 
 async function main() {
-    const testProduct = await prisma.product.create({
-        data: {
-            name: 'Test product',
-            price1: 8.7,
-            price2: new Decimal('8.7'),
-            price3: new Prisma.Decimal('8.7'),
-            price4: '8.7',
-        },
-    });
-    console.log(testProduct);
+  const decimal1 = new Prisma.Decimal("100000000000000000000000");
+  const decimal2 = new Prisma.Decimal("1234522345323454234552345");
 
-    let expectedDecimal = new Prisma.Decimal(8.7);
+  const items: Prisma.PriceCreateInput[] = [
+    {
+      id: 1,
+      price: decimal1
+    },
+    {
+      id: 2,
+      price: decimal2
+    }
+  ];
 
-    // Does not work
-    if (!testProduct.price1.eq(expectedDecimal)) console.error(`Price 1 (${testProduct.price1}) is not 8.7`);
-    if (!testProduct.price2.eq(expectedDecimal)) console.error(`Price 2 (${testProduct.price2}) is not 8.7`);
-    if (!testProduct.price3.eq(expectedDecimal)) console.error(`Price 3 (${testProduct.price3}) is not 8.7`);
+  await prisma.price.deleteMany();
+  await prisma.price.createMany({
+    data: items
+  });
 
-    // Works!
-    if (!testProduct.price4.eq(expectedDecimal)) console.error(`Price 4 (${testProduct.price4}) is not 8.7`);
+  await prisma.$executeRaw('INSERT INTO "public"."Price" ("id", "price") VALUES (3, 100000000000000000000000), (4, 1234522345323454234552345)');
+
+  const price1 = await prisma.price.findUnique({ where: { id: 1 }});
+  const price2 = await prisma.price.findUnique({ where: { id: 2 }});
+  const price3 = await prisma.price.findUnique({ where: { id: 3 }});
+  const price4 = await prisma.price.findUnique({ where: { id: 4 }});
+
+  console.log('price1 in db', price1?.price); // 9999999999999999  
+  console.log('price2 in db', price2?.price); // 1234522345323454
+
+  console.log('price1 as expected', price1?.price.eq(decimal1)); // false
+  console.log('price2 as expected', price2?.price.eq(decimal2)); // false
+  console.log('price3 as expected', price3?.price.eq(decimal1)); // true
+  console.log('price4 as expected', price4?.price.eq(decimal2)); // true
 }
 
 main()
-    .catch(e => {
-        throw e;
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+  .catch((e) => {
+    throw e;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
